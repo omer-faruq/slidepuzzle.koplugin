@@ -264,22 +264,32 @@ end
 
 function Screen:afterMove()
     self:updateHeader()
-    self.board_widget:refresh()
     if self.game:isWon() then
-        -- Make sure the just-ticked second is folded in before we evaluate
-        -- best-time records.
+        self:updateMessage(T(_("Solved in %1 moves and %2."),
+            self.game:getMoves(), formatTime(self.game:getElapsed() + self.live_tick_accum)))
+    else
+        self:updateMessage()
+    end
+    -- Dirty the whole screen so that both the board (showing the last
+    -- tile in its final position) and the updated header/message are
+    -- guaranteed to repaint together. Force that paint to complete
+    -- BEFORE anything else (especially the "solved" overlay) is shown
+    -- on top, so the winning move is actually visible on screen.
+    UIManager:setDirty(self, function()
+        return "ui", self.dimen
+    end)
+    if self.game:isWon() then
+        UIManager:forceRePaint()
+        -- Fold in the currently ticking second and stop the timer so the
+        -- reported best time matches what the header now displays.
         self:stopTicker()
         self.plugin:recordResult(self.game)
         self:updateBestLabel()
-        self:updateMessage(T(_("Solved in %1 moves and %2."),
-            self.game:getMoves(), formatTime(self.game:getElapsed())))
         UIManager:show(InfoMessage:new{
             text = T(_("You solved the %1x%1 puzzle!\nMoves: %2\nTime: %3"),
                 self.game:getSize(), self.game:getMoves(), formatTime(self.game:getElapsed())),
             timeout = 4,
         })
-    else
-        self:updateMessage()
     end
     self.plugin:saveCurrentState(self.game)
 end

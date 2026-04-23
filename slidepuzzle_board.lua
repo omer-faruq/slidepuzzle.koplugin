@@ -128,7 +128,6 @@ function BoardWidget:paintTo(bb, x, y)
     local cell = self.cell
     local border = 2
     local grid = self.game:getGrid()
-    local is_won = self.game:isWon()
     -- Outer white wash so previous frames are erased cleanly.
     bb:paintRect(x, y, self.board_size, self.board_size, Blitbuffer.COLOR_WHITE)
     for r = 1, n do
@@ -140,8 +139,20 @@ function BoardWidget:paintTo(bb, x, y)
                 -- Empty cell stays plain white with a thin frame.
                 bb:paintBorder(tile_x, tile_y, cell, cell, border, Blitbuffer.COLOR_GRAY_5)
             else
-                -- Tile body: light grey fill, darker frame, centred digit.
-                local fill = is_won and Blitbuffer.COLOR_LIGHT_GRAY or Blitbuffer.COLOR_GRAY_E
+                -- Correctly placed tiles are drawn inverted (solid black
+                -- fill with white digits) so the player can tell at a
+                -- glance which pieces are already in their final position.
+                -- Other tiles use a light-grey fill with a black digit.
+                local expected = (r - 1) * n + c
+                local in_place = (value == expected)
+                local fill, text_color
+                if in_place then
+                    fill = Blitbuffer.COLOR_BLACK
+                    text_color = Blitbuffer.COLOR_WHITE
+                else
+                    fill = Blitbuffer.COLOR_GRAY_E
+                    text_color = Blitbuffer.COLOR_BLACK
+                end
                 bb:paintRect(tile_x + 1, tile_y + 1, cell - 2, cell - 2, fill)
                 bb:paintBorder(tile_x, tile_y, cell, cell, border, Blitbuffer.COLOR_BLACK)
                 local text = tostring(value)
@@ -150,7 +161,7 @@ function BoardWidget:paintTo(bb, x, y)
                 local baseline = tile_y + math.floor((cell + metrics.y_top - metrics.y_bottom) / 2)
                 local text_x = tile_x + math.floor((cell - text_w) / 2)
                 RenderText:renderUtf8Text(bb, text_x, baseline, self.number_face, text, true, false,
-                    Blitbuffer.COLOR_BLACK)
+                    text_color)
             end
         end
     end
