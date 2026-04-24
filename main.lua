@@ -40,6 +40,12 @@ function SlidePuzzle:init()
     self.ui.menu:registerToMainMenu(self)
 end
 
+function SlidePuzzle:onSuspend()
+    if self.screen then
+        self.screen:onClose()
+    end
+end
+
 -- Menu --------------------------------------------------------------------
 
 function SlidePuzzle:addToMainMenu(menu_items)

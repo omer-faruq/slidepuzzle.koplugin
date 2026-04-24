@@ -71,8 +71,10 @@ M.strings = {
 
         -- stats dialog
         stats_title      = "Recordes",
-        stats_header     = "Tamanho / Tempo / Movimentos / Jogos",
-        stats_row        = "%1x%1       %2       %3       %4",
+        stat_col_size    = "Tam",
+        stat_col_time    = "Tempo",
+        stat_col_moves   = "Movim",
+        stat_col_games   = "Jogos",
         reset_done       = "Melhores resultados apagados.",
 
         font_size        = "Fonte",
@@ -113,7 +115,7 @@ M.strings = {
         header           = "%1x%1 Puzzle    Moves: %2    Time: %3",
 
         solved_message   = "Solved in %1 moves and %2.",
-        solved_overlay   = "You solved the %1x%1 puzzle!\nMoves: %2\nTime: %3",
+        solved_overlay   = "You solved the %1x%1 puzzle!\nMovmoves: %2\nTime: %3",
         solved_play_again = "Solved! Tap \"New\" to play again.",
         instruction      = "Tap a tile next to the gap, or swipe to slide.",
         invalid_move     = "Only tiles next to the gap can move.",
@@ -123,8 +125,10 @@ M.strings = {
         size_label       = "%1 × %1",
 
         stats_title      = "Records",
-        stats_header     = "Size / Time / Moves / Games",
-        stats_row        = "%1x%1       %2       %3       %4",
+        stat_col_size    = "Size",
+        stat_col_time    = "Time",
+        stat_col_moves   = "Moves",
+        stat_col_games   = "Games",
         reset_done       = "Best results cleared.",
 
         font_size        = "Font",
@@ -160,7 +164,7 @@ M.strings = {
         best             = "Mejor",
         best_label       = "Mejor: %1    Menos movimientos: %2",
         best_not_set     = "Mejor: aún no definido",
-        header           = "Puzzle %1x%1    Movimientos: %2    Tiempo: %3",
+        header           = "Puzzle %1x%1    Movimientos: %2    Tempo: %3",
 
         solved_message   = "Resuelto en %1 movimientos y %2.",
         solved_overlay   = "¡Resolviste el puzzle %1x%1!\nMovimientos: %2\nTiempo: %3",
@@ -173,13 +177,15 @@ M.strings = {
         size_label       = "%1 × %1",
 
         stats_title      = "Récords",
-        stats_header     = "Tamaño / Tiempo / Movimientos / Juegos",
-        stats_row        = "%1x%1       %2       %3       %4",
+        stat_col_size    = "Tam",
+        stat_col_time    = "Tiempo",
+        stat_col_moves   = "Movim",
+        stat_col_games   = "Juegos",
         reset_done       = "Mejores resultados borrados.",
 
         font_size        = "Fuente",
         increase_font    = "Aumentar fuente",
-        decrease_font    = "Disminuir fuente",
+        decrease_font    = "Diminuir fuente",
 
         menu_title       = "Slide Puzzle",
         play             = "Jugar",
@@ -223,8 +229,10 @@ M.strings = {
         size_label       = "%1 × %1",
 
         stats_title      = "Records",
-        stats_header     = "Taille / Temps / Coups / Jeux",
-        stats_row        = "%1x%1       %2       %3       %4",
+        stat_col_size    = "Tail",
+        stat_col_time    = "Temps",
+        stat_col_moves   = "Coups",
+        stat_col_games   = "Jeux",
         reset_done       = "Meilleurs résultats effacés.",
 
         font_size        = "Police",
@@ -273,8 +281,10 @@ M.strings = {
         size_label       = "%1 × %1",
 
         stats_title      = "Rekorde",
-        stats_header     = "Größe / Zeit / Züge / Spiele",
-        stats_row        = "%1x%1       %2       %3       %4",
+        stat_col_size    = "Größ",
+        stat_col_time    = "Zeit",
+        stat_col_moves   = "Züge",
+        stat_col_games   = "Spiel",
         reset_done       = "Bestresultate gelöscht.",
 
         font_size        = "Schriftart",
@@ -323,8 +333,10 @@ M.strings = {
         size_label       = "%1 × %1",
 
         stats_title      = "기록",
-        stats_header     = "크기 / 시간 / 이동 / 게임",
-        stats_row        = "%1x%1       %2       %3       %4",
+        stat_col_size    = "크기",
+        stat_col_time    = "시간",
+        stat_col_moves   = "이동",
+        stat_col_games   = "게임",
         reset_done       = "최고 기록이 삭제되었습니다.",
 
         font_size        = "글꼴",

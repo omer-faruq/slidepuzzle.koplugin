@@ -394,22 +394,37 @@ function Screen:adjustFont(delta)
 end
 
 function Screen:showStats()
-    local lines = {
-        i18n.t("stats_title"),
-        "",
-        i18n.t("stats_header"),
-        "",
-    }
+    local lines = { "", i18n.t("stats_title") .. ":", "" }
+    
+    local col_widths = { size = 8, time = 8, moves = 7, games = 6 }
+
+    local header = string.format("%-" .. col_widths.size .. "s  %-" .. col_widths.time .. "s  %" .. col_widths.moves .. "s  %" .. col_widths.games .. "s",
+        i18n.t("stat_col_size") or "Size",
+        i18n.t("stat_col_time") or "Time",
+        i18n.t("stat_col_moves") or "Moves",
+        i18n.t("stat_col_games") or "Games")
+    table.insert(lines, header)
+    table.insert(lines, string.rep("-", #header))
+    
     for size = Game.getMinSize(), Game.getMaxSize() do
-        local stats   = self.plugin:getStats(size)
-        local time_s  = (stats and stats.best_time)  and formatTime(stats.best_time)  or "  -  "
-        local moves_s = (stats and stats.best_moves) and tostring(stats.best_moves)   or " - "
-        local plays_s = (stats and stats.plays)      and tostring(stats.plays)        or "0"
-        lines[#lines + 1] = i18n.t("stats_row", size, time_s, moves_s, plays_s)
+        local stats = self.plugin:getStats(size)
+        local time_s = (stats and stats.best_time) and formatTime(stats.best_time) or "--:--"
+        local moves_s = (stats and stats.best_moves) and tostring(stats.best_moves) or "----"
+        local plays_s = (stats and stats.plays) and tostring(stats.plays) or "0"
+        
+        table.insert(lines, string.format("%-" .. col_widths.size .. "s  %-" .. col_widths.time .. "s  %" .. col_widths.moves .. "s  %" .. col_widths.games .. "s",
+            string.format("%dx%d", size, size),
+            time_s,
+            moves_s,
+            plays_s))
     end
+    
+    table.insert(lines, "")
+    
     UIManager:show(InfoMessage:new{
         text = table.concat(lines, "\n"),
-        width = math.floor(self.dimen.w * 0.9),
+        width = math.floor(self.dimen.w * 0.8),
+        face = Font:getFace("smallinfofont"),
     })
 end
 
