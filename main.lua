@@ -6,6 +6,7 @@
 --]]
 
 local DataStorage = require("datastorage")
+local Dispatcher = require("dispatcher") -- luacheck:ignore
 local LuaSettings = require("luasettings")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -34,7 +35,40 @@ function SlidePuzzle:init()
     -- Resolve and apply the chosen language as early as possible so any
     -- subsequent UI strings (menu text included) use it.
     I18n.setActive(self.settings:readSetting("language") or "default")
+    self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
+end
+
+-- Register a Gesture/Profile/QuickMenu shortcut so the user can bind a
+-- gesture or button to launch the puzzle directly. The action title is
+-- the plugin's own name rather than "Play" so it is recognizable from
+-- the long, mixed list of available shortcuts.
+function SlidePuzzle:onDispatcherRegisterActions()
+    Dispatcher:registerAction("slidepuzzle_open", {
+        category = "none",
+        event = "SlidePuzzleOpen",
+        title = I18n.t("Slide puzzle"),
+        general = true,
+    })
+end
+
+-- Event fired by the Dispatcher when the user triggers the registered
+-- shortcut. Mirrors what the "Play" menu entry does.
+function SlidePuzzle:onSlidePuzzleOpen()
+    self:showGame()
+    return true
+end
+
+-- Close the game screen (saving state) when the device is about to
+-- suspend. KOReader broadcasts the "Suspend" event right before the
+-- platform's actual sleep transition, so this is our chance to dismiss
+-- the fullscreen widget; otherwise it would be left on screen behind
+-- the lock/sleep cover and the user would come back to a stale board
+-- with a frozen timer.
+function SlidePuzzle:onSuspend()
+    if self.screen then
+        self.screen:onClose()
+    end
 end
 
 function SlidePuzzle:addToMainMenu(menu_items)
