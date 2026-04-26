@@ -6,14 +6,14 @@
 --]]
 
 local DataStorage = require("datastorage")
-local InfoMessage = require("ui/widget/infomessage")
 local LuaSettings = require("luasettings")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local _ = require("gettext")
 
 local Game = require("slidepuzzle_game")
 local Screen = require("slidepuzzle_screen")
+local I18n = require("slidepuzzle_i18n")
+local Settings = require("slidepuzzle_settings")
 
 local SlidePuzzle = WidgetContainer:extend{
     name = "slidepuzzle",
@@ -31,49 +31,39 @@ function SlidePuzzle:init()
     end
     self.states = self.settings:readSetting("states") or {}
     self.stats = self.settings:readSetting("stats") or {}
+    -- Resolve and apply the chosen language as early as possible so any
+    -- subsequent UI strings (menu text included) use it.
+    I18n.setActive(self.settings:readSetting("language") or "default")
     self.ui.menu:registerToMainMenu(self)
 end
 
 function SlidePuzzle:addToMainMenu(menu_items)
     menu_items.slidepuzzle = {
-        text = _("Slide puzzle"),
+        text_func = function() return I18n.t("Slide puzzle") end,
         sorting_hint = "tools",
-        sub_item_table = {
-            {
-                text = _("Play"),
-                keep_menu_open = false,
-                callback = function() self:showGame() end,
-            },
-            {
-                text_func = function()
-                    if self.settings:isTrue("always_new_on_open") then
-                        return _("On open: always start a fresh puzzle")
-                    end
-                    return _("On open: resume saved puzzle")
-                end,
-                checked_func = function()
-                    return self.settings:isTrue("always_new_on_open")
-                end,
-                callback = function()
-                    self.settings:toggle("always_new_on_open")
-                    self.settings:flush()
-                end,
-                keep_menu_open = true,
-            },
-            {
-                text = _("Reset best results"),
-                keep_menu_open = true,
-                callback = function()
-                    self.stats = {}
-                    self:_saveAll()
-                    UIManager:show(InfoMessage:new{
-                        text = _("Best results cleared."),
-                        timeout = 2,
-                    })
-                end,
-            },
-        },
+        sub_item_table_func = function()
+            return {
+                {
+                    text_func = function() return I18n.t("Play") end,
+                    keep_menu_open = false,
+                    callback = function() self:showGame() end,
+                },
+                {
+                    text_func = function() return I18n.t("Settings") end,
+                    sub_item_table = Settings.buildSubMenu(self),
+                    keep_menu_open = true,
+                },
+            }
+        end,
     }
+end
+
+-- Hook called by the settings sub-menu after any preference changes.
+-- Drops cached UI assets so the next render uses the new values.
+function SlidePuzzle:onSettingsChanged()
+    if self.screen and self.screen.onPreferencesChanged then
+        self.screen:onPreferencesChanged()
+    end
 end
 
 -- Persistence helpers -----------------------------------------------------

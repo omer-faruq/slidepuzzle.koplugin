@@ -18,6 +18,12 @@ A minimal classic sliding-tile puzzle that runs inside KOReader.
   home without needing colour or animations.
 - Full-screen UI with minimal chrome: flat rectangles, thick borders,
   centred digits. No animations or flicker on e-ink.
+- **Built-in translations** for English, Português, Español, Français,
+  Deutsch, 한국어 and Türkçe.
+- Configurable **font** and **font size** for the digits on the tiles.
+- Stats dialog rendered as an aligned table with **Size / Time / Moves
+  / Plays** columns, including the total number of games completed at
+  each board size.
 
 ## How to use
 
@@ -29,11 +35,29 @@ A minimal classic sliding-tile puzzle that runs inside KOReader.
 ### Menu options
 
 - **Play** — open the puzzle.
-- **On open: resume / fresh** — toggle whether reopening the plugin
-  resumes the last puzzle of the active size, or always shuffles a new
-  one.
-- **Reset best results** — clear the saved best times and best move
-  counts for every size.
+- **Settings** — sub-menu with all preferences:
+  - **Always start a new puzzle on open** — when on, reopening the
+    plugin always shuffles a new puzzle of the active size; when off,
+    the last unfinished puzzle is resumed.
+  - **Font** — font face used to draw the numbers on the tiles. The
+    first choice is *Default*, which inherits KOReader's UI font (so
+    any custom system font you have set will carry over). On top of
+    that, five bundled faces are shipped (Sans, Sans Bold, Serif,
+    FreeSans, Monospace) so the plugin always has a working fallback
+    on every device, without depending on user-installed fonts.
+  - **Font size** — overrides the auto-computed digit size. The
+    spinner pre-fills with the actual auto value for the current
+    board, so you can nudge it up or down without having to guess
+    where *Auto* sits. Use the *Default value: Auto* button at the
+    top to switch back to fully automatic sizing.
+  - **Language** — *Default* follows KOReader's UI language whenever
+    it's one of the supported translations, and falls back to English
+    otherwise. Picking an explicit language overrides this for every
+    string in the plugin (menu items included). Re-open the menu after
+    switching languages so the parent menu titles refresh.
+  - **Reset best results** — clears the saved best times, best move
+    counts and play counters for every size. Asks for confirmation
+    before deleting anything.
 
 ### In-game buttons
 
@@ -59,10 +83,42 @@ A minimal classic sliding-tile puzzle that runs inside KOReader.
 Saved files live in KOReader's settings directory:
 
 - `settings/slidepuzzle.lua` — current state per size, best results,
-  active size, preferences.
+  active size, preferences (font, font size, language, etc.).
 
 Nothing else is written or read. Disabling or uninstalling the plugin
 leaves these files untouched; delete `slidepuzzle.lua` to wipe stats.
+
+## Adding a new language
+
+All of the user-visible strings live in `slidepuzzle_i18n.lua`, which
+is a self-contained Lua table — there is no `.po`/`.mo` toolchain
+involved. To add a new translation:
+
+1. Open `slidepuzzle_i18n.lua`.
+2. Add an entry to the `M.LANGS` list with a short locale code (e.g.
+   `it` for Italian) and the language's native name.
+3. Add the same code to the `SUPPORTED` lookup table.
+4. Copy the `en` reference table at the top of the file, rename it to
+   your locale code (e.g. `local it = { ... }`), and translate every
+   value. Keys must stay exactly as they are; missing keys fall back
+   to English at runtime, so partial translations are safe to ship.
+5. Add your locale to the `translations` map at the bottom
+   (`translations.it = it`).
+6. Reload the plugin (or restart KOReader). The new entry shows up
+   under **Settings → Language**.
+
+Notes for translators:
+
+- The four short keys `col_size`, `col_time`, `col_moves` and
+  `col_plays` are used as column headers in the Stats dialog.
+  Prefer compact words/abbreviations (3–6 characters) so the columns
+  stay aligned in the monospace font used for the table.
+- Strings like `"%1x%1 Puzzle    Moves: %2    Time: %3"` use
+  positional placeholders (`%1`, `%2`, `%3`) — keep them in the
+  translation, but you can reorder them.
+- Korean (`ko`) ships with a single locale code. KOReader exposes
+  Korean as `ko_KR`; the plugin matches by stripping the country
+  suffix, so `ko_*` locales all map to the same translation.
 
 ## Credits
 

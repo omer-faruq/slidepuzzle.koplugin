@@ -18,11 +18,13 @@ local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
-local _ = require("gettext")
+local util = require("util")
 local T = require("ffi/util").template
 
 local BoardWidget = require("slidepuzzle_board")
 local Game = require("slidepuzzle_game")
+local I18n = require("slidepuzzle_i18n")
+local Settings = require("slidepuzzle_settings")
 
 local TICK_INTERVAL = 1
 
@@ -75,9 +77,13 @@ function Screen:init()
         text = "",
         max_width = math.floor(self.dimen.w * 0.95),
     }
+    local font_def = Settings.getFont(self.plugin)
+    local font_size_override = Settings.getFontSize(self.plugin)
     self.board_widget = BoardWidget:new{
         game = self.game,
         max_size = self:computeBoardMaxSize(),
+        font_face_name = font_def and font_def.face_name or nil,
+        font_size_override = font_size_override,
         onTileTap = function(row, col) self:performTap(row, col) end,
         onSwipeDir = function(direction) self:performSwipe(direction) end,
     }
@@ -110,22 +116,22 @@ function Screen:buildLayout()
         buttons = {
             {
                 {
-                    text = _("New"),
+                    text = I18n.t("New"),
                     background = Blitbuffer.COLOR_WHITE,
                     callback = function() self:onNewGame() end,
                 },
                 {
-                    text = _("Size"),
+                    text = I18n.t("Size"),
                     background = Blitbuffer.COLOR_WHITE,
                     callback = function() self:showSizeDialog() end,
                 },
                 {
-                    text = _("Stats"),
+                    text = I18n.t("Stats"),
                     background = Blitbuffer.COLOR_WHITE,
                     callback = function() self:showStats() end,
                 },
                 {
-                    text = _("Close"),
+                    text = I18n.t("Close"),
                     background = Blitbuffer.COLOR_WHITE,
                     callback = function() self:onClose() end,
                 },
@@ -154,29 +160,29 @@ end
 function Screen:updateHeader()
     local n = self.game:getSize()
     local live = self.game:getElapsed() + self.live_tick_accum
-    self.header_text:setText(T(_("%1x%1 Puzzle    Moves: %2    Time: %3"),
+    self.header_text:setText(T(I18n.t("%1x%1 Puzzle    Moves: %2    Time: %3"),
         n, self.game:getMoves(), formatTime(live)))
 end
 
 function Screen:updateBestLabel()
     local stats = self.plugin:getStats(self.game:getSize())
     if stats and (stats.best_time or stats.best_moves) then
-        local time_s = stats.best_time and formatTime(stats.best_time) or _("--:--")
+        local time_s = stats.best_time and formatTime(stats.best_time) or "--:--"
         local moves_s = stats.best_moves and tostring(stats.best_moves) or "--"
-        self.best_text:setText(T(_("Best: %1    Fewest moves: %2"), time_s, moves_s))
+        self.best_text:setText(T(I18n.t("Best: %1    Fewest moves: %2"), time_s, moves_s))
     else
-        self.best_text:setText(_("Best: not set yet"))
+        self.best_text:setText(I18n.t("Best: not set yet"))
     end
 end
 
 function Screen:getDefaultMessage()
     if self.game:isWon() then
-        return _("Solved! Tap \"New\" to play again.")
+        return I18n.t("Solved! Tap \"New\" to play again.")
     end
     if self.game:getMoves() == 0 then
-        return _("Tap a tile next to the gap, or swipe to slide.")
+        return I18n.t("Tap a tile next to the gap, or swipe to slide.")
     end
-    return _("")
+    return ""
 end
 
 function Screen:updateMessage(text)
@@ -250,7 +256,7 @@ function Screen:performTap(row, col)
     if ok then
         self:afterMove()
     else
-        self:updateMessage(_("Only tiles next to the gap can move."))
+        self:updateMessage(I18n.t("Only tiles next to the gap can move."))
     end
 end
 
@@ -265,7 +271,7 @@ end
 function Screen:afterMove()
     self:updateHeader()
     if self.game:isWon() then
-        self:updateMessage(T(_("Solved in %1 moves and %2."),
+        self:updateMessage(T(I18n.t("Solved in %1 moves and %2."),
             self.game:getMoves(), formatTime(self.game:getElapsed() + self.live_tick_accum)))
     else
         self:updateMessage()
@@ -286,7 +292,7 @@ function Screen:afterMove()
         self.plugin:recordResult(self.game)
         self:updateBestLabel()
         UIManager:show(InfoMessage:new{
-            text = T(_("You solved the %1x%1 puzzle!\nMoves: %2\nTime: %3"),
+            text = T(I18n.t("You solved the %1x%1 puzzle!\nMoves: %2\nTime: %3"),
                 self.game:getSize(), self.game:getMoves(), formatTime(self.game:getElapsed())),
             timeout = 4,
         })
@@ -303,7 +309,7 @@ function Screen:onNewGame()
     self.live_tick_accum = 0
     self:updateHeader()
     self:updateBestLabel()
-    self:updateMessage(_("New puzzle — good luck!"))
+    self:updateMessage(I18n.t("New puzzle — good luck!"))
     self.board_widget:refresh()
     UIManager:setDirty(self, function()
         return "ui", self.dimen
@@ -317,7 +323,7 @@ function Screen:showSizeDialog()
     for size = Game.getMinSize(), Game.getMaxSize() do
         buttons[#buttons + 1] = {
             {
-                text = T(_("%1 × %1"), size),
+                text = T(I18n.t("%1 × %1"), size),
                 background = Blitbuffer.COLOR_WHITE,
                 callback = function()
                     UIManager:close(dialog)
@@ -328,13 +334,13 @@ function Screen:showSizeDialog()
     end
     buttons[#buttons + 1] = {
         {
-            text = _("Cancel"),
+            text = I18n.t("Cancel"),
             background = Blitbuffer.COLOR_WHITE,
             callback = function() UIManager:close(dialog) end,
         },
     }
     dialog = ButtonDialog:new{
-        title = _("Select board size"),
+        title = I18n.t("Select board size"),
         buttons = buttons,
     }
     UIManager:show(dialog)
@@ -359,15 +365,115 @@ function Screen:switchSize(size)
     self:startTicker()
 end
 
+-- Compute the visual width of a UTF-8 string in monospace cells. CJK
+-- glyphs are full-width in monospace fonts; everything else is one
+-- cell. This is enough to keep the columns of the Stats dialog aligned
+-- across all the languages we ship.
+local function monoWidth(str)
+    local w = 0
+    for c in str:gmatch(util.UTF8_CHAR_PATTERN) do
+        if util.isCJKChar(c) then
+            w = w + 2
+        else
+            w = w + 1
+        end
+    end
+    return w
+end
+
+local function padRight(str, width)
+    local cur = monoWidth(str)
+    if cur < width then
+        return str .. string.rep(" ", width - cur)
+    end
+    return str
+end
+
+local function padLeft(str, width)
+    local cur = monoWidth(str)
+    if cur < width then
+        return string.rep(" ", width - cur) .. str
+    end
+    return str
+end
+
 function Screen:showStats()
-    local lines = { _("Best results by board size:") }
+    -- Header row with translatable column titles. Numeric columns are
+    -- right-aligned, the size column on the left.
+    local size_h  = I18n.t("col_size")
+    local time_h  = I18n.t("col_time")
+    local moves_h = I18n.t("col_moves")
+    local plays_h = I18n.t("col_plays")
+
+    -- Pre-build value strings to figure out per-column widths.
+    local rows = {}
+    local total_plays = 0
     for size = Game.getMinSize(), Game.getMaxSize() do
         local stats = self.plugin:getStats(size)
-        local time_s = (stats and stats.best_time) and formatTime(stats.best_time) or "--"
+        local time_s = (stats and stats.best_time) and formatTime(stats.best_time) or "--:--"
         local moves_s = (stats and stats.best_moves) and tostring(stats.best_moves) or "--"
-        lines[#lines + 1] = T(_("%1×%1: time %2, moves %3"), size, time_s, moves_s)
+        local plays_n = (stats and stats.plays) or 0
+        total_plays = total_plays + plays_n
+        rows[#rows + 1] = {
+            size = size .. "x" .. size,
+            time = time_s,
+            moves = moves_s,
+            plays = tostring(plays_n),
+        }
     end
-    UIManager:show(InfoMessage:new{ text = table.concat(lines, "\n") })
+
+    local size_w  = monoWidth(size_h)
+    local time_w  = monoWidth(time_h)
+    local moves_w = monoWidth(moves_h)
+    local plays_w = monoWidth(plays_h)
+    for _, r in ipairs(rows) do
+        size_w  = math.max(size_w,  monoWidth(r.size))
+        time_w  = math.max(time_w,  monoWidth(r.time))
+        moves_w = math.max(moves_w, monoWidth(r.moves))
+        plays_w = math.max(plays_w, monoWidth(r.plays))
+    end
+    -- A bit of breathing room between columns.
+    local GAP = 2
+
+    local function makeLine(c1, c2, c3, c4)
+        return padRight(c1, size_w) .. string.rep(" ", GAP)
+            .. padLeft(c2, time_w)  .. string.rep(" ", GAP)
+            .. padLeft(c3, moves_w) .. string.rep(" ", GAP)
+            .. padLeft(c4, plays_w)
+    end
+
+    local header = makeLine(size_h, time_h, moves_h, plays_h)
+    local rule = string.rep("-", monoWidth(header))
+    local lines = { I18n.t("Records:"), "", header, rule }
+    for _, r in ipairs(rows) do
+        lines[#lines + 1] = makeLine(r.size, r.time, r.moves, r.plays)
+    end
+    if total_plays == 0 then
+        lines[#lines + 1] = ""
+        lines[#lines + 1] = I18n.t("No games played yet.")
+    end
+
+    UIManager:show(InfoMessage:new{
+        face = Font:getFace("infont"),
+        text = table.concat(lines, "\n"),
+    })
+end
+
+-- Called by the plugin when settings (font face, font size, language)
+-- have changed while the screen is visible. Rebuilds the texts and
+-- refreshes the board so the new preferences take effect immediately.
+function Screen:onPreferencesChanged()
+    local font_def = Settings.getFont(self.plugin)
+    local font_size_override = Settings.getFontSize(self.plugin)
+    if self.board_widget then
+        self.board_widget:setFontPrefs(font_def and font_def.face_name or nil, font_size_override)
+    end
+    self:updateHeader()
+    self:updateBestLabel()
+    self:updateMessage()
+    UIManager:setDirty(self, function()
+        return "ui", self.dimen
+    end)
 end
 
 function Screen:onClose()

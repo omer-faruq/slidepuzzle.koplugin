@@ -16,10 +16,12 @@ local RenderText = require("ui/rendertext")
 local UIManager = require("ui/uimanager")
 
 local BoardWidget = InputContainer:extend{
-    game = nil,      -- slidepuzzle_game.Game instance
-    max_size = nil,  -- maximum board side length in pixels
-    onTileTap = nil, -- function(row, col)
-    onSwipeDir = nil,-- function(direction) where direction is left/right/up/down
+    game = nil,            -- slidepuzzle_game.Game instance
+    max_size = nil,        -- maximum board side length in pixels
+    onTileTap = nil,       -- function(row, col)
+    onSwipeDir = nil,      -- function(direction) where direction is left/right/up/down
+    font_face_name = nil,  -- optional explicit Font:getFace() name (file or fontmap key)
+    font_size_override = nil, -- optional design-size to pass to Font:getFace(); 0 / nil means auto
 }
 
 local MIN_CELL = 32
@@ -54,10 +56,23 @@ function BoardWidget:_computeMetrics()
     self.cell = cell
     self.board_size = cell * n
     self.dimen = Geom:new{ w = self.board_size, h = self.board_size }
-    -- Font face for numbers. Sizes scale down for larger grids so the
+    -- Font face for numbers. Auto-size scales down for larger grids so
     -- three-digit tiles on 7x7 still fit comfortably inside the cell.
-    local font_px = math.max(18, math.floor(cell * 0.45))
-    self.number_face = Font:getFace("cfont", font_px)
+    -- A user-provided override is passed through directly as a design
+    -- size to Font:getFace(); the zero/nil sentinel means "auto".
+    local font_face_name = self.font_face_name or "cfont"
+    local override = tonumber(self.font_size_override) or 0
+    local font_px
+    if override > 0 then
+        font_px = override
+    else
+        font_px = math.max(18, math.floor(cell * 0.45))
+    end
+    -- Cap the size so digits never spill outside the cell, even with a
+    -- large user-chosen value on a small board.
+    local max_px = math.max(MIN_CELL - 4, math.floor(cell * 0.78))
+    if font_px > max_px then font_px = max_px end
+    self.number_face = Font:getFace(font_face_name, font_px)
 end
 
 function BoardWidget:setGame(game)
@@ -67,6 +82,17 @@ end
 
 function BoardWidget:setMaxSize(px)
     self.max_size = px
+    self:_computeMetrics()
+end
+
+-- Update the font face name and/or override size and recompute the
+-- cached number_face so the next paint reflects the change. A nil
+-- `face_name` explicitly resets the face to the KOReader default
+-- ("cfont"), a nil / zero `size_override` switches to the auto-sized
+-- path in _computeMetrics().
+function BoardWidget:setFontPrefs(face_name, size_override)
+    self.font_face_name = face_name
+    self.font_size_override = size_override
     self:_computeMetrics()
 end
 
